@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modern Dashboard Charts</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+            color: #e2e8f0;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .dashboard {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+        }
+
+        .chart-container {
+            background: rgba(30, 41, 59, 0.8);
+            border-radius: 16px;
+            padding: 24px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(148, 163, 184, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .chart-container:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 48px rgba(0, 0, 0, 0.4);
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .chart-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #f1f5f9;
+        }
+
+        .status-indicator {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+
+        .status-good {
+            background: rgba(34, 197, 94, 0.2);
+            color: #22c55e;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+
+        .status-warning {
+            background: rgba(251, 191, 36, 0.2);
+            color: #fbbf24;
+            border: 1px solid rgba(251, 191, 36, 0.3);
+        }
+
+        .status-danger {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .chart-canvas {
+            position: relative;
+            height: 280px;
+        }
+
+        .metric-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #f1f5f9;
+            margin: 10px 0;
+        }
+
+        .metric-label {
+            font-size: 14px;
+            color: #94a3b8;
+            margin-bottom: 8px;
+        }
+
+        .large-chart {
+            grid-column: span 2;
+        }
+
+        .large-chart .chart-canvas {
+            height: 400px;
+        }
+
+        @media (max-width: 768px) {
+            .large-chart {
+                grid-column: span 1;
+            }
+            
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, #06b6d4, #3b82f6, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <!-- 배터리 잔량 도넛 차트 -->
+        <div class="chart-container">
+            <div class="chart-header">
+                <h3 class="chart-title">배터리 잔량</h3>
+                <span class="status-indicator status-good">GOOD</span>
+            </div>
+            <div class="metric-value gradient-text">89%</div>
+            <div class="chart-canvas">
+                <canvas id="batteryChart"></canvas>
+            </div>
+        </div>
+
+        <!-- 에너지 효율 게이지 -->
+        <div class="chart-container">
+            <div class="chart-header">
+                <h3 class="chart-title">에너지 효율</h3>
+                <span class="status-indicator status-warning">WARNING</span>
+            </div>
+            <div class="metric-value">5.2 <span style="font-size: 16px; color: #94a3b8;">km/kWh</span></div>
+            <div class="chart-canvas">
+                <canvas id="efficiencyChart"></canvas>
+            </div>
+        </div>
+
+        <!-- 주행 거리 라인 차트 -->
+        <div class="chart-container large-chart">
+            <div class="chart-header">
+                <h3 class="chart-title">일일 주행 거리</h3>
+                <span class="status-indicator status-good">GOOD</span>
+            </div>
+            <div class="chart-canvas">
+                <canvas id="distanceChart"></canvas>
+            </div>
+        </div>
+
+        <!-- 배터리 이슈 -->
+        <div class="chart-container">
+            <div class="chart-header">
+                <h3 class="chart-title">배터리 이슈</h3>
+                <span class="status-indicator status-good">GOOD</span>
+            </div>
+            <div class="metric-value">0</div>
+            <div class="metric-label">감지된 문제 없음</div>
+        </div>
+
+        <!-- 주간 충전 현황 바 차트 -->
+        <div class="chart-container">
+            <div class="chart-header">
+                <h3 class="chart-title">주간 충전 현황</h3>
+                <span class="status-indicator status-good">GOOD</span>
+            </div>
+            <div class="chart-canvas">
+                <canvas id="chargingChart"></canvas>
+            </div>
+        </div>
+
+        <!-- 배터리 온도 (최고) -->
+        <div class="chart-container">
+            <div class="chart-header">
+                <h3 class="chart-title">배터리 온도 (최고)</h3>
+                <span class="status-indicator status-warning">WARNING</span>
+            </div>
+            <div class="metric-value">32°C</div>
+            <div class="chart-canvas">
+                <canvas id="temperatureChart"></canvas>
+            </div>
+        </div>
+
+        <!-- 셀 전압 편차 -->
+        <div class="chart-container">
+            <div class="chart-header">
+                <h3 class="chart-title">셀 전압 편차</h3>
+                <span class="status-indicator status-good">GOOD</span>
+            </div>
+            <div class="metric-value">0V</div>
+            <div class="chart-canvas">
+                <canvas id="voltageChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Chart.js 기본 설정
+            Chart.defaults.color = '#94a3b8';
+            Chart.defaults.font.family = "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif";
+
+            // 배터리 잔량 도넛 차트
+            const batteryCtx = document.getElementById('batteryChart').getContext('2d');
+            new Chart(batteryCtx, {
+                type: 'doughnut',
+                data: {
+                    datasets: [{
+                        data: [89, 11],
+                        backgroundColor: ['rgba(34, 197, 94, 0.8)', 'rgba(51, 65, 85, 0.3)'],
+                        borderColor: ['#22c55e', '#334155'],
+                        borderWidth: 2,
+                        cutout: '70%'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    animation: { animateScale: true, duration: 2000 }
+                }
+            });
+
+            // 에너지 효율 게이지 차트
+            const efficiencyCtx = document.getElementById('efficiencyChart').getContext('2d');
+            new Chart(efficiencyCtx, {
+                type: 'doughnut',
+                data: {
+                    datasets: [{
+                        data: [5.2, 2.8],
+                        backgroundColor: ['rgba(251, 191, 36, 0.8)', 'rgba(51, 65, 85, 0.3)'],
+                        borderColor: ['#fbbf24', '#334155'],
+                        borderWidth: 2,
+                        cutout: '70%',
+                        circumference: 180,
+                        rotation: 270
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } }
+                }
+            });
+
+            // 일일 주행 거리 라인 차트
+            const distanceCtx = document.getElementById('distanceChart').getContext('2d');
+            new Chart(distanceCtx, {
+                type: 'line',
+                data: {
+                    labels: ['2025-08-02', '2025-08-03', '2025-08-04', '2025-08-05', '2025-08-06', '2025-08-07', '2025-08-08'],
+                    datasets: [{
+                        label: '주행 거리 (km)',
+                        data: [0, 2, 0, 0, 0, 0, 0],
+                        borderColor: '#06b6d4',
+                        backgroundColor: 'rgba(6, 182, 212, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: '#06b6d4',
+                        pointBorderColor: '#0e7490',
+                        pointBorderWidth: 2,
+                        pointRadius: 6,
+                        pointHoverRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: {
+                            grid: { color: 'rgba(148, 163, 184, 0.1)' },
+                            ticks: { color: '#94a3b8' }
+                        },
+                        y: {
+                            grid: { color: 'rgba(148, 163, 184, 0.1)' },
+                            ticks: { color: '#94a3b8', stepSize: 10 },
+                            min: 0,
+                            max: 10
+                        }
+                    }
+                }
+            });
+
+            // 주간 충전 현황 바 차트
+            const chargingCtx = document.getElementById('chargingChart').getContext('2d');
+            new Chart(chargingCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['월', '화', '수', '목', '금', '토', '일'],
+                    datasets: [{
+                        label: '충전량 (%)',
+                        data: [85, 0, 92, 0, 88, 95, 0],
+                        backgroundColor: [
+                            'rgba(139, 92, 246, 0.8)', 'rgba(51, 65, 85, 0.3)', 'rgba(139, 92, 246, 0.8)',
+                            'rgba(51, 65, 85, 0.3)', 'rgba(139, 92, 246, 0.8)', 'rgba(139, 92, 246, 0.8)', 'rgba(51, 65, 85, 0.3)'
+                        ],
+                        borderColor: ['#8b5cf6', '#334155', '#8b5cf6', '#334155', '#8b5cf6', '#8b5cf6', '#334155'],
+                        borderWidth: 2,
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { grid: { display: false }, ticks: { color: '#94a3b8' } },
+                        y: { 
+                            grid: { color: 'rgba(148, 163, 184, 0.1)' },
+                            ticks: { color: '#94a3b8' },
+                            beginAtZero: true,
+                            max: 100
+                        }
+                    }
+                }
+            });
+
+            // 배터리 온도 라인 차트
+            const temperatureCtx = document.getElementById('temperatureChart').getContext('2d');
+            new Chart(temperatureCtx, {
+                type: 'line',
+                data: {
+                    labels: ['2025-08-02', '2025-08-03', '2025-08-04', '2025-08-05', '2025-08-06', '2025-08-07', '2025-08-08'],
+                    datasets: [{
+                        label: '온도 (°C)',
+                        data: [34, 32, 32, 32, 32, 32, 32],
+                        borderColor: '#22c55e',
+                        backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: '#22c55e',
+                        pointBorderColor: '#16a34a',
+                        pointBorderWidth: 2,
+                        pointRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: {
+                            grid: { color: 'rgba(148, 163, 184, 0.1)' },
+                            ticks: { color: '#94a3b8' }
+                        },
+                        y: {
+                            grid: { color: 'rgba(148, 163, 184, 0.1)' },
+                            ticks: { color: '#94a3b8', stepSize: 1 },
+                            min: 32,
+                            max: 34
+                        }
+                    }
+                }
+            });
+
+            // 셀 전압 편차 라인 차트
+            const voltageCtx = document.getElementById('voltageChart').getContext('2d');
+            new Chart(voltageCtx, {
+                type: 'line',
+                data: {
+                    labels: ['2025-08-02', '2025-08-03', '2025-08-04', '2025-08-05', '2025-08-06', '2025-08-07', '2025-08-08'],
+                    datasets: [{
+                        label: '전압 편차 (V)',
+                        data: [0, 0, 0, 0, 0, 0, 0],
+                        borderColor: '#64748b',
+                        backgroundColor: 'rgba(100, 116, 139, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: '#64748b',
+                        pointBorderColor: '#475569',
+                        pointBorderWidth: 2,
+                        pointRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: {
+                            grid: { color: 'rgba(148, 163, 184, 0.1)' },
+                            ticks: { color: '#94a3b8' }
+                        },
+                        y: {
+                            grid: { color: 'rgba(148, 163, 184, 0.1)' },
+                            ticks: { color: '#94a3b8', stepSize: 1 },
+                            min: -1,
+                            max: 1
+                        }
+                    }
+                }
+            });
+
+            // 호버 효과
+            document.querySelectorAll('.chart-container').forEach(function(container) {
+                container.addEventListener('mouseenter', function() {
+                    container.style.background = 'rgba(30, 41, 59, 0.9)';
+                });
+                container.addEventListener('mouseleave', function() {
+                    container.style.background = 'rgba(30, 41, 59, 0.8)';
+                });
+            });
+        });
+    </script>
+</body>
+</html>
