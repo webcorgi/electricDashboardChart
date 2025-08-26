@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>76% Hibernation Dashboard</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #0f1729 0%, #1a2040 50%, #0a0e1a 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Inter', sans-serif;
+            overflow: hidden;
+        }
+
+        .dashboard-container {
+            position: relative;
+            width: 300px;
+            height: 300px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .circular-progress {
+            position: relative;
+            width: 280px;
+            height: 280px;
+        }
+
+        /* SVG 원형 진행바 */
+        .progress-ring {
+            transform: rotate(-90deg);
+        }
+
+        .progress-ring-background {
+            fill: none;
+            stroke: rgba(100, 150, 255, 0.1);
+            stroke-width: 3;
+        }
+
+        .progress-ring-progress {
+            fill: none;
+            stroke: #6495ff;
+            stroke-width: 3;
+            stroke-linecap: round;
+            stroke-dasharray: 628;
+            stroke-dashoffset: 151; /* 76% 진행률 */
+            filter: drop-shadow(0 0 8px rgba(100, 149, 255, 0.6));
+            transition: stroke-dashoffset 2s ease-in-out;
+        }
+
+        /* 눈금 표시 */
+        .tick-marks {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .tick {
+            position: absolute;
+            width: 1px;
+            height: 12px;
+            background: rgba(100, 150, 255, 0.4);
+            transform-origin: center bottom;
+        }
+
+        .tick.active {
+            background: #6495ff;
+            box-shadow: 0 0 4px rgba(100, 149, 255, 0.8);
+            height: 16px;
+        }
+
+        /* 중앙 컨텐츠 */
+        .center-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            z-index: 10;
+        }
+
+        /* 설정 아이콘 */
+        .settings-icon {
+            width: 24px;
+            height: 24px;
+            margin: 0 auto 15px;
+            opacity: 0.6;
+        }
+
+        .settings-icon svg {
+            width: 100%;
+            height: 100%;
+            fill: #ffffff;
+            filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.3));
+        }
+
+        /* 퍼센트 표시 */
+        .percentage {
+            font-size: 48px;
+            font-weight: 300;
+            color: #ffffff;
+            margin-bottom: -5px;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+        }
+
+        .percentage-symbol {
+            font-size: 20px;
+            font-weight: 300;
+            vertical-align: top;
+            margin-left: 2px;
+            opacity: 0.8;
+        }
+
+        /* 라벨 */
+        .label {
+            font-size: 14px;
+            font-weight: 400;
+            color: rgba(255, 255, 255, 0.7);
+            margin-top: 5px;
+            letter-spacing: 0.5px;
+            text-shadow: 0 0 6px rgba(255, 255, 255, 0.2);
+        }
+
+        /* 발광 효과 */
+        .glow-effect {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 320px;
+            height: 320px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(100, 149, 255, 0.1) 0%, transparent 70%);
+            animation: pulse 4s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { 
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 0.5;
+            }
+            50% { 
+                transform: translate(-50%, -50%) scale(1.05);
+                opacity: 0.8;
+            }
+        }
+
+        /* 반응형 애니메이션 */
+        .dashboard-container:hover .progress-ring-progress {
+            filter: drop-shadow(0 0 12px rgba(100, 149, 255, 0.9));
+        }
+
+        .dashboard-container:hover .glow-effect {
+            animation-duration: 2s;
+        }
+
+        /* 클릭 효과 */
+        .dashboard-container:active {
+            transform: scale(0.98);
+            transition: transform 0.1s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- 발광 효과 배경 -->
+        <div class="glow-effect"></div>
+        
+        <div class="circular-progress">
+            <!-- SVG 원형 진행바 -->
+            <svg class="progress-ring" width="280" height="280">
+                <circle class="progress-ring-background"
+                        cx="140" cy="140" r="100"/>
+                <circle class="progress-ring-progress"
+                        cx="140" cy="140" r="100"/>
+            </svg>
+            
+            <!-- 눈금 표시 -->
+            <div class="tick-marks" id="tickMarks"></div>
+        </div>
+        
+        <!-- 중앙 컨텐츠 -->
+        <div class="center-content">
+            <!-- 설정 아이콘 -->
+            <div class="settings-icon">
+                <svg viewBox="0 0 24 24">
+                    <path d="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.66 15.5,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.5,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.05 4.34,5.27L2.34,8.73C2.22,8.95 2.27,9.22 2.46,9.37L4.57,11C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.22,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.03 4.95,18.95L7.44,17.94C7.96,18.34 8.5,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.5,18.68 16.04,18.34 16.56,17.94L19.05,18.95C19.27,19.03 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z"/>
+                </svg>
+            </div>
+            
+            <!-- 퍼센트 표시 -->
+            <div class="percentage">
+                76<span class="percentage-symbol">%</span>
+            </div>
+            
+            <!-- 라벨 -->
+            <div class="label">Hibernation</div>
+        </div>
+    </div>
+
+    <script>
+        // 눈금 생성 및 활성화
+        function createTickMarks() {
+            const tickContainer = document.getElementById('tickMarks');
+            const totalTicks = 100; // 100개의 눈금
+            const activePercentage = 76; // 76%까지 활성화
+            
+            for (let i = 0; i < totalTicks; i++) {
+                const tick = document.createElement('div');
+                tick.className = 'tick';
+                
+                // 76%까지의 눈금을 활성화
+                if (i < activePercentage) {
+                    tick.classList.add('active');
+                }
+                
+                // 각도 계산 (원형으로 배치)
+                const angle = (i * 360) / totalTicks;
+                const radius = 130; // 원의 반지름
+                const radian = (angle * Math.PI) / 180;
+                
+                const x = 140 + Math.cos(radian) * radius;
+                const y = 140 + Math.sin(radian) * radius;
+                
+                tick.style.left = x + 'px';
+                tick.style.top = y + 'px';
+                tick.style.transform = `rotate(${angle + 90}deg)`;
+                
+                tickContainer.appendChild(tick);
+            }
+        }
+
+        // 진행률 애니메이션
+        function animateProgress() {
+            const progressRing = document.querySelector('.progress-ring-progress');
+            const circumference = 2 * Math.PI * 100; // 반지름 100인 원의 둘레
+            const percentage = 76;
+            const offset = circumference - (percentage / 100) * circumference;
+            
+            // 초기에는 0%에서 시작
+            progressRing.style.strokeDashoffset = circumference;
+            
+            // 1초 후 76%로 애니메이션
+            setTimeout(() => {
+                progressRing.style.strokeDashoffset = offset;
+            }, 500);
+        }
+
+        // 숫자 카운트 애니메이션
+        function animateCounter() {
+            const percentageElement = document.querySelector('.percentage');
+            const targetValue = 76;
+            let currentValue = 0;
+            const duration = 2000; // 2초
+            const increment = targetValue / (duration / 16); // 60fps 기준
+            
+            const timer = setInterval(() => {
+                currentValue += increment;
+                if (currentValue >= targetValue) {
+                    currentValue = targetValue;
+                    clearInterval(timer);
+                }
+                percentageElement.innerHTML = Math.round(currentValue) + '<span class="percentage-symbol">%</span>';
+            }, 16);
+        }
+
+        // 클릭 이벤트 (랜덤 값으로 변경)
+        function handleClick() {
+            const newValue = Math.floor(Math.random() * 100) + 1;
+            updateDashboard(newValue);
+        }
+
+        function updateDashboard(percentage) {
+            // 진행바 업데이트
+            const progressRing = document.querySelector('.progress-ring-progress');
+            const circumference = 2 * Math.PI * 100;
+            const offset = circumference - (percentage / 100) * circumference;
+            progressRing.style.strokeDashoffset = offset;
+            
+            // 눈금 업데이트
+            const ticks = document.querySelectorAll('.tick');
+            ticks.forEach((tick, index) => {
+                if (index < percentage) {
+                    tick.classList.add('active');
+                } else {
+                    tick.classList.remove('active');
+                }
+            });
+            
+            // 숫자 카운터 애니메이션
+            const percentageElement = document.querySelector('.percentage');
+            const currentValue = parseInt(percentageElement.textContent);
+            let animationValue = currentValue;
+            const increment = (percentage - currentValue) / 30;
+            
+            const timer = setInterval(() => {
+                animationValue += increment;
+                if ((increment > 0 && animationValue >= percentage) || 
+                    (increment < 0 && animationValue <= percentage)) {
+                    animationValue = percentage;
+                    clearInterval(timer);
+                }
+                percentageElement.innerHTML = Math.round(animationValue) + '<span class="percentage-symbol">%</span>';
+            }, 16);
+        }
+
+        // 초기화
+        document.addEventListener('DOMContentLoaded', function() {
+            createTickMarks();
+            animateProgress();
+            animateCounter();
+            
+            // 클릭 이벤트 추가
+            document.querySelector('.dashboard-container').addEventListener('click', handleClick);
+        });
+    </script>
+</body>
+</html>
